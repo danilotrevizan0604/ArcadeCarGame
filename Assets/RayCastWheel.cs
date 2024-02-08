@@ -18,6 +18,8 @@ public class RayCastWheel : MonoBehaviour
     public float accelerationForce;
     public float carTopSpeed;
     public AnimationCurve powerCurve;
+    public float downforceCoefficient = 10f; // Adjust this value to get the desired downforce effect
+    public float maxDownforce = 50f; // Maximum downforce that can be applied to keep the car stable
 
     [Space]
     [Header("Steering")]
@@ -46,6 +48,8 @@ public class RayCastWheel : MonoBehaviour
 
         tireMass = rb.mass / 4;
 
+        springStrength *= Mathf.Pow(10, 4);
+
     }
 
     // Update is called once per frame
@@ -69,6 +73,7 @@ public class RayCastWheel : MonoBehaviour
                     float offset = maxDistance - hit.distance;
 
                     //calculate springForce based on offset and springStrength
+                    
                     float springForce = offset * springStrength;
 
                     //calculate the velocity for damping, world space velocity
@@ -120,6 +125,14 @@ public class RayCastWheel : MonoBehaviour
                         rb.AddForceAtPosition(accelDir * availableTorque, wheel[i].position);
                     }
 
+                    // Calculate downforce
+                    float speed = Vector3.Dot(this.transform.forward, rb.velocity);
+                    float downforce = Mathf.Min(speed * downforceCoefficient, maxDownforce); // Cap the downforce to a maximum value
+
+                    // Apply downforce
+                    Vector3 downForceVector = -transform.up * downforce / wheel.Length; // Distribute downforce
+                    rb.AddForceAtPosition(downForceVector, wheel[i].position, ForceMode.Force);
+
                     steerInput = Input.GetAxisRaw("Horizontal");
 
                     // Calculate steering angles using Ackermann steering geometry
@@ -155,7 +168,11 @@ public class RayCastWheel : MonoBehaviour
 
             }
 
+
         }
+
     }
 }
+
+
 
