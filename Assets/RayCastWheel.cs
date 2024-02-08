@@ -103,7 +103,6 @@ public class RayCastWheel : MonoBehaviour
                     // Acceleration/Braking
                     Vector3 accelDir = wheel[i].transform.forward;
 
-
                     accelInput = Input.GetAxisRaw("Vertical") * accelerationForce;
 
                     // acceleration torque
@@ -124,33 +123,39 @@ public class RayCastWheel : MonoBehaviour
                     steerInput = Input.GetAxisRaw("Horizontal");
 
                     // Calculate steering angles using Ackermann steering geometry
-                    float turnRadius = wheelBase / Mathf.Tan(Mathf.Abs(maxSteerAngle) * Mathf.Deg2Rad) * steerInput;
+                    float turnRadius = wheelBase / Mathf.Tan(maxSteerAngle * Mathf.Deg2Rad * steerInput);
 
                     // Calculate steering angles for each wheel Ackerman equation
                     float leftTargetSteerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (turnRadius + (wheelWidth / 2)));
                     float rightTargetSteerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (turnRadius - (wheelWidth / 2)));
 
-                    if (steerInput > 0 && i < 2)
+                    float targetSteerAngle = 0f; // Default target angle is 0 (straight ahead)
+                    if (i < 2) // Applies to front wheels only
                     {
+                        if (steerInput != 0) // If there's steering input
+                        {
+                            if (i == 0) // Front left wheel
+                            {
+                                targetSteerAngle = steerInput > 0 ? leftTargetSteerAngle : rightTargetSteerAngle;
+                            }
+                            else if (i == 1) // Front right wheel
+                            {
+                                targetSteerAngle = steerInput > 0 ? rightTargetSteerAngle : leftTargetSteerAngle;
+                            }
+                        }
+                        // Smoothly transition towards the target steering angle, whether it's a specific angle for steering or 0 for resetting
+                        float smoothSteerAngle = Mathf.SmoothDampAngle(wheel[i].localEulerAngles.y, targetSteerAngle, ref steerVel, turnSmoothTime);
 
-                        wheel[i].localEulerAngles = new Vector3(0, rightTargetSteerAngle, 0);
-
+                        // Apply the smoothed steering angle to the wheel's local rotation
+                        wheel[i].localRotation = Quaternion.Euler(0f, smoothSteerAngle, 0f);
                     }
-                    else if (steerInput < 0 && i < 2)
-                    {
-
-                        wheel[i].localEulerAngles = new Vector3(0, leftTargetSteerAngle, 0);
-
-                    }
-                    else
-                    {
-
-                        wheel[i].localEulerAngles = new Vector3(0, 0, 0);
-                    }
-
+                    // No changes are made to rear wheels' rotation in this code snippet
                 }
 
+
             }
+
         }
     }
 }
+
