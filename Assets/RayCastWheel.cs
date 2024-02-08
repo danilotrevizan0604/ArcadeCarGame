@@ -91,6 +91,8 @@ public class RayCastWheel : MonoBehaviour
                     //Steering Force
                     //world-space direction of the spring force
                     Vector3 steeringDir = wheel[i].transform.right;
+                    
+               
 
                     //calculate the velocity in the direction os sliding
                     float steeringVel = Vector3.Dot(steeringDir, wheelVelo);
@@ -98,12 +100,23 @@ public class RayCastWheel : MonoBehaviour
                     //change in velocity that we would like to control
                     float desiredVelChange = -steeringVel * tireGripFactor;
 
+                    // Cap the lateral force to prevent excessive correction that might lead to instability
+
                     // turn change velocity into acceleration ( acceleration = change in vel / time)
                     // this will produce the acceleration necessary to change the velocity by desiredVelChange in 1 physics step
                     float desiredAccel = desiredVelChange / Time.fixedDeltaTime;
+                    
+                    // Calculate the lateral force
+                    float lateralForceMagnitude = tireMass * desiredAccel;
+
+                    // Cap the lateral force to prevent excessive correction that might lead to instability
+                    float maxLateralForce = 1000f; // Example value, adjust based on your game's physics
+                    lateralForceMagnitude = Mathf.Min(lateralForceMagnitude, maxLateralForce);
 
                     // Force = Mass * acceleration, multiply by the mass of the tire and apply as a force
-                    rb.AddForceAtPosition(steeringDir * tireMass * desiredAccel, wheel[i].position);
+                    // Apply the capped lateral force
+                    rb.AddForceAtPosition(steeringDir * lateralForceMagnitude, wheel[i].position, ForceMode.Force);
+                    
 
                     // Acceleration/Braking
                     Vector3 accelDir = wheel[i].transform.forward;

@@ -320,7 +320,7 @@ MonoBehaviour:
   wheelWidth: 1.3
   steerVel: 0.5
   turnSmoothTime: 0.1
-  tireGripFactor: 0.25
+  tireGripFactor: 0.5
 --- !u!65 &280350639
 BoxCollider:
   m_ObjectHideFlags: 0
