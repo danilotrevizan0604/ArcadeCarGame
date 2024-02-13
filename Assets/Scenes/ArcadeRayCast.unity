@@ -135,7 +135,7 @@ GameObject:
   - component: {fileID: 21363284}
   - component: {fileID: 21363283}
   - component: {fileID: 21363282}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Plane
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -265,11 +265,11 @@ MonoBehaviour:
   - {fileID: 802967707}
   - {fileID: 2058173837}
   - {fileID: 2034789056}
-  springStrength: 85
+  springStrength: 600
   springRestLength: 0.25
   wheelRadius: 0.3
-  dampStrength: 95000
-  accelerationForce: 2750
+  dampStrength: 250
+  accelerationForce: 5
   carTopSpeed: 162
   powerCurve:
     serializedVersion: 2
@@ -314,13 +314,15 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   downforceCoefficient: 0.1
-  maxDownforce: 25
-  maxSteerAngle: 30
+  maxDownforce: 0.5
+  maxSteerAngle: 20
   wheelBase: 2.38
-  wheelWidth: 1.3
-  steerVel: 0.5
+  wheelWidth: 1.38
+  steerVel: 1
   turnSmoothTime: 0.1
-  tireGripFactor: 0.5
+  baseMaxSteerAngle: 32
+  speedSensitivity: 0.5
+  tireGripFactor: 0.1
 --- !u!65 &280350639
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -340,7 +342,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 0.81130224, z: 1}
+  m_Size: {x: 0.67, y: 0.81130224, z: 1}
   m_Center: {x: 0, y: 0.080622286, z: 0}
 --- !u!4 &280350642
 Transform:
@@ -350,7 +352,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 280350637}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.9399998, z: 0}
+  m_LocalPosition: {x: 0, y: 2.607, z: 0}
   m_LocalScale: {x: 2, y: 1, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -370,9 +372,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 280350637}
   serializedVersion: 4
-  m_Mass: 870
-  m_Drag: 0.025
-  m_AngularDrag: 0.01
+  m_Mass: 1
+  m_Drag: 0.5
+  m_AngularDrag: 0.025
   m_CenterOfMass: {x: 0, y: -0.25, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -548,14 +550,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 802967706}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
   m_LocalPosition: {x: 0.5, y: -0.5, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 280350642}
   m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
 --- !u!1 &1474730357
 GameObject:
   m_ObjectHideFlags: 0
@@ -838,14 +840,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2034789055}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
   m_LocalPosition: {x: 0.5, y: -0.5, z: -0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 280350642}
   m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
 --- !u!1 &2058173836
 GameObject:
   m_ObjectHideFlags: 0
