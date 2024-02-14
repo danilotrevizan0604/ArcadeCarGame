@@ -38,8 +38,7 @@ public class RayCastWheel : MonoBehaviour
     public float turnSmoothTime = 0.1f;
     public float baseMaxSteerAngle = 30f; // The max steering angle at low speed or stationary
     public float speedSensitivity = 0.1f; // Determines how much the steer angle decreases with speed
-    float maxLateralForce = 10f;
-
+    public float maxLateralForce = 10f;
 
     // Tire
     [Header("Tire")]
