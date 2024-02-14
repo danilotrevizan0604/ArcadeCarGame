@@ -484,7 +484,7 @@ MonoBehaviour:
   - {fileID: 8259092494687722576}
   - {fileID: 14572154688230732}
   - {fileID: 9210675326934825583}
-  springStrength: 921.9
+  springStrength: 850
   springRestLength: 0.25
   wheelRadius: 0.3
   dampStrength: 200.5
@@ -534,13 +534,13 @@ MonoBehaviour:
     m_RotationOrder: 4
   downforceCoefficient: 0
   maxDownforce: 0.5
-  maxSteerAngle: 12.2
+  maxSteerAngle: 15
   wheelBase: 2.38
   wheelWidth: 1.36
   steerVel: 0.35
   turnSmoothTime: 0.32
-  baseMaxSteerAngle: 26.2
-  speedSensitivity: 0.75
+  baseMaxSteerAngle: 29
+  speedSensitivity: 0.6
   maxLateralForce: 1000
   tireGripFactor: 0.05
 --- !u!65 &280350639

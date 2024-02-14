@@ -4,11 +4,13 @@ public class RayCastWheel : MonoBehaviour
 {
 
     Rigidbody rb;
+
     private float[] currentSteerAngles;
     private float[] currentSuspensionCompression;
     private Vector3[] originalWheelPositions;
     private float leftWheelSteerAngle = 0f;
     private float rightWheelSteerAngle = 0f;
+    private Vector3[] wheelVelocities;
 
     [Header("Wheel Transforms")]
     public Transform[] wheel;
@@ -48,6 +50,7 @@ public class RayCastWheel : MonoBehaviour
     float maxDistance;
     float accelInput;
     float steerInput;
+    float currentSpeed;
 
 
     //Main Unity Functions
@@ -57,6 +60,7 @@ public class RayCastWheel : MonoBehaviour
 
         currentSteerAngles = new float[wheel.Length];
         currentSuspensionCompression = new float[wheel.Length];
+        wheelVelocities = new Vector3[wheel.Length];
 
         // Initialize the array to match the number of wheels
         originalWheelPositions = new Vector3[wheel.Length];
@@ -75,11 +79,16 @@ public class RayCastWheel : MonoBehaviour
 
     void FixedUpdate()
     {
+        UpdateWheelVelocities();
+
+        currentSpeed = rb.velocity.magnitude;
+
+
         for (int i = 0; i < wheel.Length; i++)
         {
             ProcessWheel(i);
-
         }
+
         ProcessSteering(); // Process steering based on input
     }
 
@@ -87,43 +96,30 @@ public class RayCastWheel : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         tireMass = rb.mass / 4;
-        maxDistance = wheelRadius + springRestLength; // Ensure this is set correctly
+        
 
+    }
+
+    void UpdateWheelVelocities()
+    {
+        for (int i = 0; i < wheel.Length; i++)
+        {
+            wheelVelocities[i] = rb.GetPointVelocity(wheel[i].position);
+        }
     }
 
     void ProcessWheel(int i)
     {
-        //RAYCAST METHOD
-        /*RaycastHit hit;
-        bool isGrounded = Physics.Raycast(wheel[i].transform.position, Vector3.down, out hit, maxDistance);
-
-        if (isGrounded && hit.collider.CompareTag("Ground"))
-        {
-            ApplySuspensionForce(i, hit);
-            ApplySteeringForce(i, hit);
-            ApplyAccelerationForce(i, hit);
-            
-            // Optionally, apply any other forces related to the wheel here
-        }*/
-
-
         //SPHERECAST METHOD
-        // Define the radius of the sphere for the SphereCast, likely related to your wheel's size
-        float sphereRadius = wheelRadius; // Assuming wheelRadius is defined as before
 
-        // Starting point of the SphereCast should be a bit above the wheel to ensure the cast begins outside the wheel collider
-        Vector3 sphereCastStart = wheel[i].transform.position + Vector3.up * sphereRadius;
-
-        // Calculate the maximum distance to cast the sphere. 
-        // This should be longer than the suspension's rest length to detect the ground.
-        float castDistance = springRestLength + sphereRadius; // Adjust based on your suspension setup
+        maxDistance = wheelRadius + springRestLength; // Ensure this is set correctly
 
         RaycastHit hitInfo;
-        bool hit = Physics.SphereCast(sphereCastStart, sphereRadius, Vector3.down, out hitInfo, castDistance);
+        bool hit = Physics.SphereCast(wheel[i].transform.position, wheelRadius, Vector3.down, out hitInfo, maxDistance);
 
         if (hit && hitInfo.collider.CompareTag("Ground"))
         {
-            ApplySuspensionForce(i, hitInfo, sphereRadius);
+            ApplySuspensionForce(i, hitInfo, wheelRadius);
             ApplySteeringForce(i, hitInfo);
             ApplyAccelerationForce(i, hitInfo);
 
@@ -138,54 +134,35 @@ public class RayCastWheel : MonoBehaviour
         }
 
         // Visual Debugging for SphereCast
-        DebugDrawSphereCast(sphereCastStart, Vector3.down * castDistance, sphereRadius);
+        DebugDrawSphereCast(wheel[i].transform.position, Vector3.down * maxDistance, wheelRadius);
 
     }
 
     void ApplySuspensionForce(int i, RaycastHit hit, float sphereRadius)
     {
-        /*
-        // Calculate the spring distance offset
-        float offset = maxDistance - hit.distance;
-        float springForce = offset * springStrength;
-
-        // Calculate wheel velocity for damping
-        Vector3 wheelVelo = rb.GetPointVelocity(wheel[i].position);
-        Vector3 springDir = Vector3.up; // Assuming the suspension always pushes up against gravity
-
-        // Damping force calculation
-        float dampForce = Vector3.Dot(wheelVelo, springDir) * dampStrength;
-
-        // Final suspension force
-        float suspensionForce = (springForce - dampForce) * Time.deltaTime;
-
-        // Apply the force at the wheel's position
-        rb.AddForceAtPosition(springDir * suspensionForce, wheel[i].position);
-
-        // Optional: Visualize the suspension force for debugging
-        Debug.DrawRay(wheel[i].position, springDir * suspensionForce, Color.green);
-        */
-
         // Calculate how much the suspension is compressed based on the hit distance
-        // We subtract sphereRadius since the SphereCast starts from the center of the sphere
-        float suspensionCompression = (springRestLength + sphereRadius) - hit.distance;
+        float suspensionCompression = maxDistance - hit.distance;
 
         // Ensure that we don't apply forces if the suspension isn't actually compressed
         if (suspensionCompression > 0)
         {
             // Get the normal of the hit point to adjust force application direction
             Vector3 groundNormal = hit.normal;
+            Vector3 springDirection = groundNormal.normalized; // Assuming up is the direction of suspension force
+
+            // Use the cached velocity
+            Vector3 wheelVelocity = wheelVelocities[i];
+
+
+            // Calculate spring force using the offset
             float springForce = suspensionCompression * springStrength;
 
-            // Damping force calculation remains similar to before
-            Vector3 wheelVelocity = rb.GetPointVelocity(wheel[i].position);
-            
-            Vector3 springDirection = groundNormal.normalized; // Assuming up is the direction of suspension force
-            
+            // Calculate damping strength
             float dampingForce = Vector3.Dot(wheelVelocity, springDirection) * dampStrength;
 
+
             // Final suspension force calculation
-            float totalSuspensionForce = (springForce - dampingForce) * Time.deltaTime;
+            float totalSuspensionForce = (springForce - dampingForce) * Time.fixedDeltaTime;
 
             // Apply the force at the wheel's position
             rb.AddForceAtPosition(springDirection * totalSuspensionForce, wheel[i].position);
@@ -200,9 +177,10 @@ public class RayCastWheel : MonoBehaviour
     {
         steerInput = Input.GetAxis("Horizontal"); // Get steering input (-1 to 1)
 
-        float currentSpeed = rb.velocity.magnitude;
+        float Speed = currentSpeed;
 
-        float currentMaxSteerAngle = Mathf.Max(baseMaxSteerAngle - (currentSpeed * speedSensitivity), 10f); // Ensures there's always some ability to steer, clamped at 10 degrees
+        // Ensures there's always some ability to steer, clamped at 10 degrees
+        float currentMaxSteerAngle = Mathf.Max(baseMaxSteerAngle - (Speed * speedSensitivity), 10f);
 
         // Calculate turn radius based on steering input
         // Note: Mathf.Tan returns a value in radians, and maxSteerAngle * steerInput is in degrees.
@@ -235,13 +213,14 @@ public class RayCastWheel : MonoBehaviour
 
     void ApplySteeringForce(int i, RaycastHit hit)
     {
-        Vector3 wheelVelo = rb.GetPointVelocity(wheel[i].position);
+        // Use the cached velocity
+        Vector3 wheelVelocity = wheelVelocities[i];
 
         //world-space direction of the spring force
         Vector3 steeringDir = wheel[i].transform.right;
 
         //calculate the velocity in the direction os sliding
-        float steeringVel = Vector3.Dot(steeringDir, wheelVelo);
+        float steeringVel = Vector3.Dot(steeringDir, wheelVelocity);
 
         //change in velocity that we would like to control
         float desiredVelChange = -steeringVel * tireGripFactor;
@@ -264,7 +243,7 @@ public class RayCastWheel : MonoBehaviour
         Debug.DrawRay(wheel[i].position, steeringDir * lateralForceMagnitude * 0.1f, Color.red);
 
         // Optionally, visualize the wheel velocity direction
-        Debug.DrawRay(wheel[i].position, wheelVelo.normalized * 2f, Color.blue);
+        Debug.DrawRay(wheel[i].position, wheelVelocity.normalized * 2f, Color.blue);
     }
 
     bool ShouldApplyAcceleration(int i)
@@ -347,38 +326,7 @@ public class RayCastWheel : MonoBehaviour
 
     void UpdateWheelMeshes()
     {
-        float speed = rb.velocity.magnitude; // Get the speed of the car
-
-        /*for (int i = 0; i < wheelMeshes.Length; i++)
-        {
-            Transform wheelMeshTransform = wheelMeshes[i];
-
-            // Update position for suspension compression
-            float compression = currentSuspensionCompression[i];
-            wheelMeshTransform.localPosition = new Vector3(wheelMeshTransform.localPosition.x, originalWheelPositions[i].y - compression, wheelMeshTransform.localPosition.z);
-
-            // Update steer angle for front wheels
-            float steerAngle = 0f;
-            if (i == 0) // Left front wheel mesh
-            {
-                steerAngle = leftWheelSteerAngle;
-            }
-            else if (i == 1) // Right front wheel mesh
-            {
-                steerAngle = rightWheelSteerAngle;
-            }
-
-            // Apply steering angle smoothly for front wheels
-            if (i < 2) // Assuming the first two entries in wheelMeshes are the front wheels
-            {
-                float targetAngle = Mathf.SmoothDampAngle(wheelMeshTransform.localEulerAngles.y, steerAngle, ref steerVel, turnSmoothTime);
-                wheelMeshTransform.localEulerAngles = new Vector3(wheelMeshTransform.localEulerAngles.x, targetAngle, wheelMeshTransform.localEulerAngles.z);
-            }
-
-            // Additional rotation to simulate wheel rolling
-            float rollRotation = CalculateRollRotation(speed); // Adjusted to not require wheel index if using a uniform method
-            wheelMeshTransform.Rotate(Vector3.right, rollRotation, Space.Self);
-        }*/
+        float Speed = currentSpeed; // Get the speed of the car
 
         for (int i = 0; i < wheelMeshes.Length; i++)
         {
@@ -391,15 +339,15 @@ public class RayCastWheel : MonoBehaviour
             float compression = currentSuspensionCompression[i];
             Vector3 adjustedPosition = wheelTransform.localPosition;
             adjustedPosition.y += (compression + 0.65f); // Adjust Y position based on suspension compression
-            
-            wheelMeshTransform.localPosition = adjustedPosition;    
+
+            wheelMeshTransform.localPosition = adjustedPosition;
 
             // For rotation - directly copy
             // Steering (Y rotation) and potentially wheel rolling (Z rotation) are copied directly
             wheelMeshTransform.localRotation = wheelTransform.localRotation;
 
             // Additional rotation to simulate wheel rolling
-            float rollRotation = CalculateRollRotation(speed);
+            float rollRotation = CalculateRollRotation(Speed);
             wheelMeshTransform.Rotate(Vector3.right, rollRotation, Space.Self);
 
         }
@@ -422,7 +370,6 @@ public class RayCastWheel : MonoBehaviour
 
             return rotationInDegrees;
         }
-
 
     }
 }
