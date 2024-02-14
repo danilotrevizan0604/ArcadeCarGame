@@ -282,7 +282,16 @@ public class RayCastWheel : MonoBehaviour
         {
             // Calculate acceleration force based on user input, car's current speed, etc.
             // Use hit and wheel[i] information if needed, for example, to adjust force based on wheel position
-            Vector3 accelDir = wheel[i].transform.forward;
+
+            // Use the normal of the hit point to adjust the force application direction
+            Vector3 groundNormal = hit.normal;
+
+            // Calculate the forward direction of the car relative to the ground normal
+            Vector3 forwardOnSurface = Vector3.Cross(groundNormal, wheel[i].transform.forward).normalized;
+
+            // Now, get the direction that's "forward" for the wheel, but still perpendicular to the ground normal
+            Vector3 accelDir = Vector3.Cross(forwardOnSurface, groundNormal).normalized;
+
             accelInput = Input.GetAxisRaw("Vertical") * accelerationForce;
             float carSpeed = Vector3.Dot(transform.forward, rb.velocity);
             float normalizedSpeed = Mathf.Clamp01(Mathf.Abs(carSpeed) / carTopSpeed);
@@ -291,6 +300,8 @@ public class RayCastWheel : MonoBehaviour
             rb.AddForceAtPosition(accelDir * availableTorque, wheel[i].position);
 
             ApplyDownforce(carSpeed);
+
+            Debug.DrawRay(wheel[i].position, accelDir * 2, Color.white); // Visualize acceleration direction
         }
     }
 
