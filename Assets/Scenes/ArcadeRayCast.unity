@@ -149,7 +149,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 21363281}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: fb22ed1b541932d46a99100ab5a278dc, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -484,12 +484,12 @@ MonoBehaviour:
   - {fileID: 8259092494687722576}
   - {fileID: 14572154688230732}
   - {fileID: 9210675326934825583}
-  springStrength: 850
-  springRestLength: 0.25
-  wheelRadius: 0.3
-  dampStrength: 200.5
+  springStrength: 550
+  springRestLength: 0.3
+  wheelRadius: 0.35
+  dampStrength: 210
   accelerationForce: 5
-  carTopSpeed: 162
+  carTopSpeed: 135
   powerCurve:
     serializedVersion: 2
     m_Curve:
@@ -503,7 +503,7 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0.34700796
     - serializedVersion: 3
-      time: 0.36518708
+      time: 0.3516678
       value: 0.9992608
       inSlope: 0.045875113
       outSlope: 0.045875113
@@ -512,13 +512,13 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.1435676
     - serializedVersion: 3
-      time: 0.64468926
-      value: 0.9932034
-      inSlope: -0.27026784
-      outSlope: -0.27026784
+      time: 0.6507012
+      value: 0.9953129
+      inSlope: -0.151689
+      outSlope: -0.151689
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.12705414
+      inWeight: 0.24285957
       outWeight: 0.2027411
     - serializedVersion: 3
       time: 0.9916857
@@ -534,15 +534,14 @@ MonoBehaviour:
     m_RotationOrder: 4
   downforceCoefficient: 0
   maxDownforce: 0.5
-  maxSteerAngle: 15
   wheelBase: 2.38
   wheelWidth: 1.36
-  steerVel: 0.35
-  turnSmoothTime: 0.32
-  baseMaxSteerAngle: 29
-  speedSensitivity: 0.6
+  steerVel: 0.25
+  turnSmoothTime: 0.4
+  baseMaxSteerAngle: 27
+  speedSensitivity: 0.45
   maxLateralForce: 1000
-  tireGripFactor: 0.05
+  tireGripFactor: 0.2
 --- !u!65 &280350639
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -550,7 +549,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 280350637}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: fb22ed1b541932d46a99100ab5a278dc, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -562,8 +561,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.75, y: 1, z: 3}
-  m_Center: {x: 0, y: 0, z: 0.05}
+  m_Size: {x: 1.75, y: 0.556931, z: 3}
+  m_Center: {x: 0, y: 0.22153449, z: 0.049999952}
 --- !u!4 &280350642
 Transform:
   m_ObjectHideFlags: 0
@@ -594,7 +593,7 @@ Rigidbody:
   m_GameObject: {fileID: 280350637}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0.25
+  m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: -0.25, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -611,7 +610,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!1 &296364651
 GameObject:
   m_ObjectHideFlags: 0
@@ -636,7 +635,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 296364651}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.875, y: -0.5000001, z: 1.5}
+  m_LocalPosition: {x: -0.875, y: -0.49999988, z: 1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1092,7 +1091,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 802967706}
   m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
-  m_LocalPosition: {x: 0.875, y: -0.5, z: 1.5}
+  m_LocalPosition: {x: 0.875, y: -0.49999988, z: 1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2132,6 +2131,8 @@ GameObject:
   - component: {fileID: 2028625641}
   - component: {fileID: 2028625640}
   - component: {fileID: 2028625639}
+  - component: {fileID: 2028625642}
+  - component: {fileID: 2028625643}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2206,13 +2207,72 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2028625638}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 13.88, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2028625642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2028625638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    quality: 3
+    frameInfluence: 0.1
+    jitterScale: 1
+    mipBias: 0
+    varianceClampScale: 0.9
+    contrastAdaptiveSharpening: 0
+--- !u!114 &2028625643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2028625638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f6d3ff905719c845a4a6404bc4d4162, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  carTransform: {fileID: 7446477680357180731}
+  followSpeed: 2
+  lookSpeed: 5
 --- !u!1 &2034789055
 GameObject:
   m_ObjectHideFlags: 0
@@ -2237,7 +2297,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2034789055}
   m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
-  m_LocalPosition: {x: 0.875, y: -0.5, z: -1.5}
+  m_LocalPosition: {x: 0.875, y: -0.49999988, z: -1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2268,7 +2328,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2058173836}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.875, y: -0.5, z: -1.5}
+  m_LocalPosition: {x: -0.875, y: -0.49999988, z: -1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
