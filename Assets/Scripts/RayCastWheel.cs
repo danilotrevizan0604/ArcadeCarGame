@@ -17,10 +17,73 @@ public class RayCastWheel : MonoBehaviour
 
     // Suspension
     [Header("Suspension")]
+    [Tooltip("The k constant in the Hooke's law for the suspension. High values make the spring hard to compress. Make this larger for heavier vehicles. Recommended: 5x car mass.")]
+    /// <summary>
+    /// The k constact in the Hooke's law for the suspension. High values make the spring hard to compress. Make this higher for heavier vehicles
+    /// </summary>
     public float springStrength;
-    public float springRestLength;
+
+    [Tooltip("How far the spring expands when it is in air.")]
+    /// <summary>
+    /// How far the spring expands when it is in air.
+    /// </summary>
+    public float springLength = .25f;
+
+    [Tooltip("The radius of the wheel")]
+    /// <summary>
+    /// The radius of the wheel
+    /// </summary>
     public float wheelRadius;
+
+    [Tooltip("Damping applied to the wheel. Higher values allow the car to negotiate bumps easily. Recommended: 0.25. Values outside [0, 0.5f] are unnatural")]
+    /// <summary>
+    /// Damping applied to the wheel. Higher values allow the car to negotiate bumps easily. Recommended: 0.25. Values outside [0, 0.5f] are unnatural
+    /// </summary>
     public float dampStrength;
+
+    [Tooltip("The rate (m/s) at which the spring relaxes to maximum length when the wheel is not on the ground. Recommended: suspension distance/2")]
+    /// <summary>
+    /// The rate (m/s) at which the spring relaxes to maximum length when the wheel is not on the ground.
+    /// </summary>
+    public float springRelaxRate = .125f;
+
+    /// <summary>
+    /// The distance to which the spring of the wheel is compressed
+    /// </summary>
+    public float compressionDistance { get; private set; }
+    float m_PrevCompressionDist;
+
+    /// <summary>
+    /// The ratio of compression distance and suspension distance
+    /// 0 when the wheel is entirely uncompressed, 
+    /// 1 when the wheel is entirely compressed
+    /// </summary>
+    public float compressionRatio { get; private set; }
+
+    public float sprungMass => suspensionForce.magnitude / 9.81f;
+
+    /// <summary>
+    /// The force the spring exerts on the rigidbody
+    /// </summary>
+    public Vector3 suspensionForce { get; private set; }
+
+    [Header("Raycasting")]
+    /// <summary>
+    /// The layers used for wheel raycast
+    /// </summary>
+    public LayerMask m_RaycastLayers;
+
+    /// <summary>
+    /// The raycast hit point of the wheel
+    /// </summary>
+    public RaycastHit hit { get { return m_Hit; } }
+    RaycastHit m_Hit;
+
+    public bool isGrounded;
+
+    Ray m_Ray;
+    public const float k_ExtraRayLength = 1;
+    public float RayLength => springLength + wheelRadius + k_ExtraRayLength;
 
     // Motor
     [Header("Motor")]
@@ -59,7 +122,7 @@ public class RayCastWheel : MonoBehaviour
 
         currentSteerAngles = new float[wheel.Length];
         wheelVelocities = new Vector3[wheel.Length];
-        
+
         // Initialize the array to match the number of wheels
         originalWheelPositions = new Vector3[wheel.Length];
 
@@ -77,62 +140,83 @@ public class RayCastWheel : MonoBehaviour
 
         currentSpeed = rb.velocity.magnitude; //rb speed of the vehicle
         currentVelocity = rb.velocity; //rb velocity of the vehicle
-                                              //
+                                       //
         for (int i = 0; i < wheel.Length; i++) //iteration for each wheel suspension
         {
-            maxDistance = wheelRadius + springRestLength;
+            m_Ray.direction = -wheel[i].transform.up;
+            m_Ray.origin = wheel[i].transform.position + wheel[i].transform.up * k_ExtraRayLength;
+
+            maxDistance = wheelRadius + springLength;
             wheelVelocities[i] = rb.GetPointVelocity(wheel[i].position);
 
-            RaycastHit hitInfo;
-            bool hit = Physics.SphereCast(wheel[i].transform.position, wheelRadius, Vector3.down, out hitInfo, maxDistance);
+            isGrounded = WheelRaycast(RayLength, ref m_Hit);
 
             // Get the normal of the hit point to adjust force application direction
-            Vector3 groundNormal = hitInfo.normal;
+            Vector3 groundNormal = hit.normal;
 
-            if (hit && hitInfo.collider.CompareTag("Ground"))
+            if (!isGrounded)
             {
-                //SUSPENSION FORCE CALCULATION
-                float suspensionCompression = maxDistance - hitInfo.distance; // Calculate how much the suspension is compressed based on the hit distance
-
-                Vector3 springDirection = groundNormal.normalized; // Assuming up is the direction of suspension force
-
-                float springForce = suspensionCompression * springStrength; // Calculate spring force using the offset
-
-                float dampingForce = Vector3.Dot(wheelVelocities[i], springDirection) * dampStrength; // Calculate damping strength
-
-                float totalSuspensionForce = (springForce - dampingForce) * Time.fixedDeltaTime; // Final suspension force calculation
-
-                rb.AddForceAtPosition(springDirection * totalSuspensionForce, wheel[i].position); // Apply the force at the wheel's position 
-                
-                // WHEEL MESH
-                Vector3 adjustedPosition = wheel[i].localPosition;
-                adjustedPosition.y += (suspensionCompression + 0.65f); // Adjust Y position based on suspension compression
-
-                wheelMeshes[i].localPosition = adjustedPosition;
-
-                //GRIP FORCE CALCULATION
-                Vector3 slideDir = wheel[i].transform.right; //world-space direction of the slide force
-
-                float slidingVel = Vector3.Dot(slideDir, wheelVelocities[i]); //calculate the velocity in the direction os sliding
-                
-                slidingVel *= -tireGripFactor; //change in velocity that we would like to control
-
-                float desiredAccel = slidingVel / Time.fixedDeltaTime; // turn change velocity into acceleration
-
-                float lateralForceMagnitude = tireMass * desiredAccel; // Calculate the lateral force
-
-                lateralForceMagnitude = Mathf.Min(lateralForceMagnitude, maxLateralForce);
-
-                rb.AddForceAtPosition(slideDir * lateralForceMagnitude, wheel[i].position);
-
+                m_PrevCompressionDist = compressionDistance;
+                compressionDistance = compressionDistance - Time.fixedDeltaTime * springRelaxRate;
+                compressionDistance = Mathf.Clamp(compressionDistance, 0, springLength);
+                return;
             }
-            
+
+            var force = 0.0f;
+            compressionDistance = RayLength - hit.distance;
+            compressionDistance = Mathf.Clamp(compressionDistance, 0, springLength);
+            compressionRatio = compressionDistance / springLength;
+
+            // Calculate the force from the springs compression using Hooke's Law
+            float compressionForce = springStrength * compressionRatio;
+            force += compressionForce;
+
+            // Calculate the damping force based on compression rate of the spring
+            float rate = (m_PrevCompressionDist - compressionDistance) / Time.fixedDeltaTime;
+            m_PrevCompressionDist = compressionDistance;
+
+            float dampingForce = rate * springStrength * dampStrength;
+            force -= dampingForce;
+
+            suspensionForce = wheel[i].transform.up * force;
+
+            // Apply suspension force
+            GetComponent<Rigidbody>().AddForceAtPosition(suspensionForce, wheel[i].transform.position);
+
+            // WHEEL MESH
+            Vector3 adjustedPosition = wheel[i].localPosition;
+            adjustedPosition.y += (compressionDistance + 0.65f); // Adjust Y position based on suspension compression
+
+            wheelMeshes[i].localPosition = adjustedPosition;
+
+            //GRIP FORCE CALCULATION
+            Vector3 slideDir = wheel[i].transform.right; //world-space direction of the slide force
+
+            float slidingVel = Vector3.Dot(slideDir, wheelVelocities[i]); //calculate the velocity in the direction os sliding
+
+            slidingVel *= -tireGripFactor; //change in velocity that we would like to control
+
+            float desiredAccel = slidingVel / Time.fixedDeltaTime; // turn change velocity into acceleration
+
+            float lateralForceMagnitude = tireMass * desiredAccel; // Calculate the lateral force
+
+            lateralForceMagnitude = Mathf.Min(lateralForceMagnitude, maxLateralForce);
+
+            rb.AddForceAtPosition(slideDir * lateralForceMagnitude, wheel[i].position);
+
+            bool WheelRaycast(float maxDistance, ref RaycastHit hit)
+            {
+                if (Physics.SphereCast(m_Ray.origin, wheelRadius, m_Ray.direction, out hit, maxDistance, m_RaycastLayers))
+                    return true;
+                return false;
+            }
+
             if (i < 2) //FRONT WHEELS
             {
                 //ACCELERATION FORCE CALCULATION
 
                 Vector3 forwardDir = wheel[i].transform.forward;
-                
+
                 Vector3 forwardOnSurface = Vector3.Cross(groundNormal, forwardDir); // Calculate the forward direction of the car relative to the ground normal
 
                 Vector3 accelDir = Vector3.Cross(forwardOnSurface, groundNormal).normalized; // Now, get the direction that's "forward" for the wheel, but still perpendicular to the ground normal
@@ -175,7 +259,7 @@ public class RayCastWheel : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.centerOfMass = new Vector3(0, -0.5f, 0);
         tireMass = rb.mass / 4;
-        
+
     }
 
     /*private void ApplyDownforce(float speed)
